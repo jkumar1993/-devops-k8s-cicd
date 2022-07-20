@@ -1,1 +1,1 @@
-# -devops-k8s-cicd
+# smallcase-task
