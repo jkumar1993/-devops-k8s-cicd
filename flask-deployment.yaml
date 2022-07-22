@@ -17,6 +17,7 @@ spec:
     spec:
       containers:
       - name: flask
-        image: registry.hub.docker.com/megiakki/versha-project:%IMAGE_NO%
+        image: 739771722513.dkr.ecr.us-east-1.amazonaws.com/flask-app:latest
+:%IMAGE_NO%
         ports:
         - containerPort: 5000
