@@ -8,7 +8,7 @@ node {
     def app
     stage('clean workspace'){
         echo 'Clean Workspace '
-        sh "rm -rf *"
+         cleanWs()
     }
     stage('Clone repository') {
         echo "Cloning git repository to workspace"
