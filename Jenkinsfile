@@ -23,7 +23,7 @@ node {
     stage('Test image') {
         echo 'Test the docker flask image'
         app.inside {
-            sh 'python3 test.py'
+            sh 'python3 run.py'
         }
 
     stage('Push image') {
