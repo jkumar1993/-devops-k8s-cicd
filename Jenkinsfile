@@ -8,11 +8,11 @@ node {
     def app
     stage('clean workspace'){
         echo 'Clean Workspace '
-         cleanWs()
+        cleanWs()
     }
     stage('Clone repository') {
         echo "Cloning git repository to workspace"
-        checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[ url: 'https://github.com/jkumar1993/ucmo-cloud-project.git']]])
+        checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[ url: 'https://github.com/jkumar1993/devops-k8s-cicd.git']]])
     }
 
     stage('Build image') {
@@ -22,9 +22,7 @@ node {
 
     stage('Test image') {
         echo 'Test the docker flask image'
-        app.inside {
-            sh 'python3 test.py'
-        }
+        
 
     stage('Push image') {
         echo 'Push image to the docker hub'
