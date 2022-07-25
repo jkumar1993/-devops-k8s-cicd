@@ -1,4 +1,10 @@
 node {
+    environment {
+        AWS_ACCOUNT_ID="739771722513"
+        AWS_DEFAULT_REGION="us-east-1" 
+        IMAGE_REPO_NAME="flask-app"
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+    }
     def app
     stage('clean workspace'){
         echo 'Clean Workspace '
@@ -6,25 +12,25 @@ node {
     }
     stage('Clone repository') {
         echo "Cloning git repository to workspace"
-        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'git_akash', url: 'https://github.com/akki8400/smallcase-task.git']]])
+        checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[ url: 'https://github.com/jkumar1993/ucmo-cloud-project.git']]])
     }
 
     stage('Build image') {
         echo 'Build the docker flask image'
-        app = docker.build("megiakki/versha-project")
+        app = docker.build("flask-app")
     }
 
     stage('Test image') {
         echo 'Test the docker flask image'
         app.inside {
-            sh 'python test.py'
+            sh 'python3 test.py'
         }
-    }
+
     stage('Push image') {
         echo 'Push image to the docker hub'
-        docker.withRegistry('https://registry.hub.docker.com', 'DOCKER_AKKI') {
-            app.push("${env.BUILD_NUMBER}")
-            app.push("latest")
+        sh "aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/e5c3r3u1"
+        sh "docker tag flask-app:latest public.ecr.aws/e5c3r3u1/flask-app:${env.BUILD_NUMBER}"
+        sh "docker push public.ecr.aws/e5c3r3u1/flask-app:${env.BUILD_NUMBER}"
         }
     }
     stage('Update the deployment file'){
@@ -34,24 +40,26 @@ node {
      sh "cat flask-deployment.yaml"
     }
     stage('Deploy the flask app'){
-      echo 'Deploy the flasj image at AWS EKS, on Cluster already present in EKS'
-      withCredentials([[
-              $class: 'AmazonWebServicesCredentialsBinding',
-              credentialsId: 'AWS_CREDS',
-              accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-              secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-          ]]){
-      sh '''
+      echo 'Deploy the flask image at AWS EKS, on Cluster already present in EKS'
+withCredentials([[
+    $class: 'AmazonWebServicesCredentialsBinding',
+    credentialsId: 'AWS_CREDS',
+    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+]])
+   {
 
+      sh '''
               #export PATH=$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/lib/jvm/java-11-openjdk-11.0.7.10-1.el8_1.x86_64/bin:/root/bin:/root/bin:/usr/local/bin/aws
               #aws configure list-profiles
-              #curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.16.8/2020-04-16/bin/linux/amd64/kubectl
-              #chmod +x ./kubectl
-              #mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+              curl -o kubectl https://dl.k8s.io/release/v1.24.0/bin/linux/amd64/kubectl
+              chmod +x ./kubectl
+              mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
               kubectl version --short --client
-              eksctl version
-              aws eks --region us-west-2 update-kubeconfig --name versha-project
+              #eksctl version
+              aws eks update-kubeconfig --region us-east-1 --name staging_eks
               kubectl get svc
+              #kubectl get ns
               echo "Execute the deployment"
               #kubectl create namespace smallcase-demo
               if [ $? -eq 0 ]; then
@@ -68,7 +76,6 @@ node {
               sleep 5s
               echo "\n\n Deployment details \n\n"
               kubectl get all -n smallcase-demo
-
               echo "Deployment done successfully"
         '''
     }  }
@@ -98,7 +105,7 @@ node {
         } }
         stage('Clean docker images from local') {
       sh '''
-          sudo docker images -a | grep "versha-project" | awk '{print $3}' | xargs docker rmi -f
+          sudo docker images -a | grep "flask-app" | awk '{print $3}' | xargs docker rmi -f
       '''
 
   }
