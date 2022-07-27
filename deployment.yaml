@@ -16,7 +16,7 @@ spec:
       - name: flask
         image: registry.hub.docker.com/megiakki/smallcase-task:34
         ports:
-        - containerPort: 5000
+        - containerPort: 8000
 ---
 # https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service
 kind: Service
@@ -28,6 +28,6 @@ spec:
     app: flask
   ports:
   - protocol: TCP
-    port: 5000
-    targetPort: 5000
+    port: 8000
+    targetPort: 8000
   type: LoadBalancer
