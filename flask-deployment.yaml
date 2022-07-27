@@ -19,4 +19,4 @@ spec:
       - name: flask
         image: public.ecr.aws/e5c3r3u1/flask-app:%IMAGE_NO%
         ports:
-        - containerPort: 5000
+        - containerPort: 8000
